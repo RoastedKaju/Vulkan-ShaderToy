@@ -67,6 +67,17 @@ SDL_Window *VulkanContext::createWindow(const char *title, int width, int height
     return pWindow;
 }
 
+void VulkanContext::createCommandPool()
+{
+    VkCommandPoolCreateInfo createInfo{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        .queueFamilyIndex = queueFamily};
+
+    utils::check(vkCreateCommandPool(device, &createInfo, nullptr, &commandPool));
+    std::cout << "Command pool created.\n";
+}
+
 void VulkanContext::createInstance()
 {
     VkApplicationInfo applicationInfo{
@@ -137,7 +148,6 @@ void VulkanContext::createDevice()
     vkGetPhysicalDeviceQueueFamilyProperties(devices[deviceIndex], &queueFamilyCount, nullptr);
     std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
     vkGetPhysicalDeviceQueueFamilyProperties(devices[deviceIndex], &queueFamilyCount, queueFamilies.data());
-    uint32_t queueFamily{0};
     for (size_t i = 0; i < queueFamilies.size(); ++i)
     {
         if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)

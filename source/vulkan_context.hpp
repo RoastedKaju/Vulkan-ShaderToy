@@ -25,6 +25,7 @@ public:
     ~VulkanContext();
 
     SDL_Window *createWindow(const char *title, int width, int height);
+    void createCommandPool();
 
     // Getters
     inline SDL_Window *getWindow() const { return pWindow; }
@@ -33,6 +34,7 @@ public:
     inline VkDevice getLogicalDevice() const { return device; }
     inline VkQueue getGraphicsQueue() const { return queue; }
     inline const Config &getConfig() const { return config; }
+    inline VkCommandPool getCommandPool() const { return commandPool; }
 
 private:
     void createInstance();
@@ -48,5 +50,7 @@ private:
     VkPhysicalDevice physicalDevice{VK_NULL_HANDLE};
     VkDevice device{VK_NULL_HANDLE};
     VkQueue queue{VK_NULL_HANDLE};
+    uint32_t queueFamily{0};
     VmaAllocator allocator{VK_NULL_HANDLE};
+    VkCommandPool commandPool{VK_NULL_HANDLE};
 };

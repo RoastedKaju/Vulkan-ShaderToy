@@ -8,7 +8,12 @@ Renderer::Renderer(VulkanContext &ctx) : context{ctx}
 {
     // Use the context to create swapchain and surface
     swapchain.init(&context);
+    // Create semaphores and fences
     createSyncObjects();
+    // Create command pool
+    context.createCommandPool();
+    // Create command buffers
+    createCommandBuffers();
 }
 
 Renderer::~Renderer()
@@ -38,4 +43,18 @@ void Renderer::createSyncObjects()
         utils::check(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &semaphore));
     }
     std::cout << "Sync objects created.\n";
+}
+
+void Renderer::createCommandBuffers()
+{
+    auto commandPool = context.getCommandPool();
+    auto device = context.getLogicalDevice();
+
+    VkCommandBufferAllocateInfo allocInfo{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = commandPool,
+        .commandBufferCount = maxFramesInFlight};
+
+    utils::check(vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()));
+    std::cout << "Command buffers created.\n";
 }

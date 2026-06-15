@@ -18,6 +18,7 @@ public:
 
 private:
     void createSyncObjects();
+    void createCommandBuffers();
 
 private:
     // Renderer uses context
@@ -32,4 +33,7 @@ private:
     std::array<VkFence, maxFramesInFlight> fences;
     std::array<VkSemaphore, maxFramesInFlight> imageAcquiredSemaphores;
     std::vector<VkSemaphore> renderComponentSemaphores;
+
+    // Command buffers
+    std::array<VkCommandBuffer, maxFramesInFlight> commandBuffers;
 };
