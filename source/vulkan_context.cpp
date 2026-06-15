@@ -4,13 +4,21 @@
 #define VOLK_IMPLEMENTATION
 #include <volk.h>
 #include <SDL3/SDL_vulkan.h>
+#define VMA_IMPLEMENTATION
+#include <vma/vk_mem_alloc.h>
 
 #include "utils.hpp"
 
-VulkanContext::VulkanContext(int argc, char *argv[], const DebugConfig &config) : config{config}
+VulkanContext::VulkanContext(int argc, char *argv[], const Config &config) : config{config}
 {
     this->argc = argc;
     this->argv = *argv;
+
+    if (!SDL_Init(SDL_INIT_VIDEO))
+    {
+        std::cerr << "Failed to Init Video: " << SDL_GetError() << "\n";
+        exit(EXIT_FAILURE);
+    }
 
     utils::check(SDL_Vulkan_LoadLibrary(NULL));
     if (volkInitialize() != VK_SUCCESS)
@@ -21,10 +29,29 @@ VulkanContext::VulkanContext(int argc, char *argv[], const DebugConfig &config) 
 
     createInstance();
     createDevice();
+    initializeAllocator();
 }
 
 VulkanContext::~VulkanContext()
 {
+    std::cout << "Tearing down Vulkan context.\n";
+    if (pWindow)
+    {
+        SDL_DestroyWindow(pWindow);
+    }
+    SDL_Quit();
+}
+
+SDL_Window *VulkanContext::createWindow(const char *title, int width, int height)
+{
+    pWindow = SDL_CreateWindow(title, width, height, SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN);
+    assert(pWindow && "Failed to create Window.");
+    std::cout << "Window created.\n";
+
+    // create surface and swapchain for this window
+    swapchain.init(this);
+
+    return pWindow;
 }
 
 void VulkanContext::createInstance()
@@ -95,7 +122,78 @@ void VulkanContext::createDevice()
     vkGetPhysicalDeviceProperties2(devices[deviceIndex], &deviceProps);
     std::cout << "Selected device: " << deviceProps.properties.deviceName << '\n';
 
-
     // Queue
     uint32_t queueFamilyCount{0};
+    vkGetPhysicalDeviceQueueFamilyProperties(devices[deviceIndex], &queueFamilyCount, nullptr);
+    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(devices[deviceIndex], &queueFamilyCount, queueFamilies.data());
+    uint32_t queueFamily{0};
+    for (size_t i = 0; i < queueFamilies.size(); ++i)
+    {
+        if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+        {
+            queueFamily = static_cast<uint32_t>(i);
+            break;
+        }
+    }
+    utils::check(SDL_Vulkan_GetPresentationSupport(instance, devices[deviceIndex], queueFamily));
+
+    // Logical device
+    const float queuePriorities{1.0f};
+    VkDeviceQueueCreateInfo queueCreateInfo{
+        .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+        .queueFamilyIndex = queueFamily,
+        .queueCount = 1,
+        .pQueuePriorities = &queuePriorities};
+
+    VkPhysicalDeviceVulkan12Features enabledVk12Features{
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+        .descriptorIndexing = true,
+        .shaderSampledImageArrayNonUniformIndexing = true,
+        .descriptorBindingVariableDescriptorCount = true,
+        .runtimeDescriptorArray = true,
+        .bufferDeviceAddress = true};
+
+    VkPhysicalDeviceVulkan13Features enabledVk13Features{
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+        .pNext = &enabledVk12Features,
+        .synchronization2 = true,
+        .dynamicRendering = true};
+
+    VkPhysicalDeviceFeatures enabledVk10Features{.samplerAnisotropy = VK_TRUE};
+
+    const std::vector<const char *> deviceExtensions{VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+
+    VkDeviceCreateInfo deviceCreateInfo{
+        .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .pNext = &enabledVk13Features,
+        .queueCreateInfoCount = 1,
+        .pQueueCreateInfos = &queueCreateInfo,
+        .enabledExtensionCount = (uint32_t)deviceExtensions.size(),
+        .ppEnabledExtensionNames = deviceExtensions.data(),
+        .pEnabledFeatures = &enabledVk10Features};
+
+    utils::check(vkCreateDevice(devices[deviceIndex], &deviceCreateInfo, nullptr, &device));
+    vkGetDeviceQueue(device, queueFamily, 0, &queue);
+    std::cout << "Logical device and Queue created.\n";
+
+    physicalDevice = devices[deviceIndex];
+}
+
+void VulkanContext::initializeAllocator()
+{
+    VmaVulkanFunctions vkFunctions{
+        .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
+        .vkGetDeviceProcAddr = vkGetDeviceProcAddr,
+        .vkCreateImage = vkCreateImage};
+
+    VmaAllocatorCreateInfo allocatorCreateInfo{
+        .flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT,
+        .physicalDevice = physicalDevice,
+        .device = device,
+        .pVulkanFunctions = &vkFunctions,
+        .instance = instance};
+
+    utils::check(vmaCreateAllocator(&allocatorCreateInfo, &allocator));
+    std::cout << "Allocator created.\n";
 }

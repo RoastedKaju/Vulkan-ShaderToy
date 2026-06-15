@@ -1,5 +1,7 @@
 #include "application.hpp"
 
+#include <SDL3/SDL.h>
+
 Application::Application()
 {
 }
@@ -10,14 +12,10 @@ Application::~Application()
 
 void Application::init(int argc, char *argv[])
 {
-    if (!SDL_Init(SDL_INIT_VIDEO))
-    {
-        std::cerr << "Failed to Init Video: " << SDL_GetError() << "\n";
-        exit(EXIT_FAILURE);
-    }
-
-    DebugConfig config{.enableValidation = true, .validationLayers{"VK_LAYER_KHRONOS_validation"}};
+    Config config{.enableValidation = true, .validationLayers{"VK_LAYER_KHRONOS_validation"}};
     pVulkanContext = std::make_unique<VulkanContext>(argc, argv, config);
+
+    pVulkanContext->createWindow("Shader-Toy", 1280u, 720u);
 
     isRunning = false;
 }
@@ -34,18 +32,12 @@ void Application::run()
                 isRunning = false;
             }
         }
-
-        SDL_SetRenderDrawColor(pRenderer, 0, 128, 100, 255);
-        SDL_RenderClear(pRenderer);
-        SDL_RenderPresent(pRenderer);
     }
 }
 
 void Application::shutdown()
 {
-    SDL_DestroyRenderer(pRenderer);
-    SDL_DestroyWindow(pWindow);
-    SDL_Quit();
+    pVulkanContext.reset();
 }
 
 int main(int argc, char *argv)

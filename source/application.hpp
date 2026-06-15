@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <memory>
-#include <SDL3/SDL.h>
 
 #include "vulkan_context.hpp"
 
@@ -18,8 +17,5 @@ public:
 
 private:
     std::unique_ptr<VulkanContext> pVulkanContext;
-
-    SDL_Window *pWindow;
-    SDL_Renderer *pRenderer;
     bool isRunning = false;
 };
