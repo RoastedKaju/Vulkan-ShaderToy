@@ -40,6 +40,7 @@ void Swapchain::createSurface()
 void Swapchain::createSwapchain()
 {
     auto device = pContext->getLogicalDevice();
+    const auto presentMode = pContext->getConfig().presentMode;
 
     const VkFormat imageFormat{VK_FORMAT_B8G8R8A8_SRGB};
     VkSwapchainCreateInfoKHR createInfo{
@@ -53,7 +54,7 @@ void Swapchain::createSwapchain()
         .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         .preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
         .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-        .presentMode = VK_PRESENT_MODE_FIFO_KHR};
+        .presentMode = presentMode};
 
     utils::check(vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapchain));
 

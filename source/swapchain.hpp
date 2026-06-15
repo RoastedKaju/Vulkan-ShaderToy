@@ -15,6 +15,12 @@ public:
 
     void init(VulkanContext *context);
 
+    // Getters
+    inline VkSurfaceKHR getSurface() const { return surface; }
+    inline VkSwapchainKHR getSwapchain() const { return swapchain; }
+    inline std::vector<VkImage> &getSwapchainImages() { return swapchainImages; }
+    inline std::vector<VkImageView> &getSwapchainImageViews() { return swapchainImageViews; }
+
 protected:
     void createSurface();
     void createSwapchain();

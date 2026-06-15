@@ -13,31 +13,15 @@ struct Config
 {
     bool enableValidation{};
     std::vector<const char *> validationLayers{};
+    VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR;
+    uint32_t deviceIndex{0};
 };
-
-// Debug callback
-static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-    VkDebugUtilsMessageSeverityFlagBitsEXT severity,
-    VkDebugUtilsMessageTypeFlagsEXT type,
-    const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-    void *pUserData)
-{
-    (void)type;
-    (void)pUserData;
-
-    if (severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
-    {
-        std::cerr << "[Validation] " << pCallbackData->pMessage << "\n";
-    }
-
-    return VK_FALSE;
-}
 
 class VulkanContext
 {
 public:
     VulkanContext() = default;
-    VulkanContext(int argc, char *argv[], const Config &config);
+    VulkanContext(const Config &config);
     ~VulkanContext();
 
     SDL_Window *createWindow(const char *title, int width, int height);
@@ -48,16 +32,14 @@ public:
     inline VkPhysicalDevice getPhysicalDevice() const { return physicalDevice; }
     inline VkDevice getLogicalDevice() const { return device; }
     inline VkQueue getGraphicsQueue() const { return queue; }
+    inline const Config &getConfig() const { return config; }
 
-protected:
+private:
     void createInstance();
     void createDevice();
     void initializeAllocator();
 
 private:
-    int argc;
-    char *argv;
-
     SDL_Window *pWindow{nullptr};
 
     Config config{};
@@ -67,7 +49,4 @@ private:
     VkDevice device{VK_NULL_HANDLE};
     VkQueue queue{VK_NULL_HANDLE};
     VmaAllocator allocator{VK_NULL_HANDLE};
-
-    // ....
-    Swapchain swapchain;
 };

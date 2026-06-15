@@ -1,9 +1,12 @@
 #pragma once
 
 #include <iostream>
+#include <string>
 #include <memory>
+#include <SDL3/SDL.h>
 
 #include "vulkan_context.hpp"
+#include "renderer.hpp"
 
 class Application
 {
@@ -11,11 +14,14 @@ public:
     Application();
     ~Application();
 
-    void init(int argc, char *argv[]);
+    void init(uint32_t deviceIndexArg = 0);
     void run();
     void shutdown();
 
 private:
     std::unique_ptr<VulkanContext> pVulkanContext;
+    std::unique_ptr<Renderer> pRenderer;
+
+    SDL_Window *pWindow;
     bool isRunning = false;
 };

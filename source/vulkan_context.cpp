@@ -9,11 +9,26 @@
 
 #include "utils.hpp"
 
-VulkanContext::VulkanContext(int argc, char *argv[], const Config &config) : config{config}
+// Debug callback
+VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT severity,
+    VkDebugUtilsMessageTypeFlagsEXT type,
+    const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
+    void *pUserData)
 {
-    this->argc = argc;
-    this->argv = *argv;
+    (void)type;
+    (void)pUserData;
 
+    if (severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+    {
+        std::cerr << "[Validation] " << pCallbackData->pMessage << "\n";
+    }
+
+    return VK_FALSE;
+}
+
+VulkanContext::VulkanContext(const Config &config) : config{config}
+{
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
         std::cerr << "Failed to Init Video: " << SDL_GetError() << "\n";
@@ -39,6 +54,7 @@ VulkanContext::~VulkanContext()
     {
         SDL_DestroyWindow(pWindow);
     }
+    SDL_QuitSubSystem(SDL_INIT_VIDEO);
     SDL_Quit();
 }
 
@@ -47,9 +63,6 @@ SDL_Window *VulkanContext::createWindow(const char *title, int width, int height
     pWindow = SDL_CreateWindow(title, width, height, SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN);
     assert(pWindow && "Failed to create Window.");
     std::cout << "Window created.\n";
-
-    // create surface and swapchain for this window
-    swapchain.init(this);
 
     return pWindow;
 }
@@ -112,15 +125,12 @@ void VulkanContext::createDevice()
     utils::check(vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data()));
     uint32_t deviceIndex{0};
 
-    if (argc > 1)
-    {
-        deviceIndex = std::stoi(&argv[1]);
-        assert(deviceIndex < deviceCount);
-    }
+    deviceIndex = config.deviceIndex;
+    assert(deviceIndex < deviceCount);
 
     VkPhysicalDeviceProperties2 deviceProps{.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
     vkGetPhysicalDeviceProperties2(devices[deviceIndex], &deviceProps);
-    std::cout << "Selected device: " << deviceProps.properties.deviceName << '\n';
+    std::cout << "Selected device: " << deviceProps.properties.deviceName << ".\n";
 
     // Queue
     uint32_t queueFamilyCount{0};

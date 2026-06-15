@@ -1,7 +1,5 @@
 #include "application.hpp"
 
-#include <SDL3/SDL.h>
-
 Application::Application()
 {
 }
@@ -10,12 +8,16 @@ Application::~Application()
 {
 }
 
-void Application::init(int argc, char *argv[])
+void Application::init(uint32_t deviceIndexArg)
 {
-    Config config{.enableValidation = true, .validationLayers{"VK_LAYER_KHRONOS_validation"}};
-    pVulkanContext = std::make_unique<VulkanContext>(argc, argv, config);
+    Config config{.enableValidation = true, .validationLayers{"VK_LAYER_KHRONOS_validation"}, .deviceIndex = deviceIndexArg};
+    pVulkanContext = std::make_unique<VulkanContext>(config);
 
-    pVulkanContext->createWindow("Shader-Toy", 1280u, 720u);
+    // Create window
+    pWindow = pVulkanContext->createWindow("Shader-Toy", 1280u, 720u);
+
+    // Create renderer
+    pRenderer = std::make_unique<Renderer>(*pVulkanContext);
 
     isRunning = false;
 }
@@ -37,18 +39,22 @@ void Application::run()
 
 void Application::shutdown()
 {
+    pRenderer.reset();
     pVulkanContext.reset();
 }
 
 int main(int argc, char *argv)
 {
-    (void)argc;
-    (void)argv;
-
     try
     {
+        uint32_t deviceIndex{0};
+        if (argc > 1)
+        {
+            deviceIndex = argv[1];
+        }
+
         Application application{};
-        application.init(argc, &argv);
+        application.init(deviceIndex);
         application.run();
         application.shutdown();
     }
