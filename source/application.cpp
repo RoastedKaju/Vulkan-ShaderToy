@@ -19,6 +19,9 @@ void Application::init(uint32_t deviceIndexArg)
     // Create renderer
     pRenderer = std::make_unique<Renderer>(*pVulkanContext);
 
+    // Load fullscreen shaders
+    pRenderer->createShaders();
+
     isRunning = false;
 }
 
@@ -60,7 +63,7 @@ int main(int argc, char *argv)
     }
     catch (const std::exception &exception)
     {
-        std::cerr << exception.what() << '\n';
+        std::cerr <<"[EXCEPTION] "<< exception.what() << '\n';
         return EXIT_FAILURE;
     }
 

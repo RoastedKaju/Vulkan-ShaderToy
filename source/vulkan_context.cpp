@@ -137,7 +137,7 @@ void VulkanContext::createDevice()
     uint32_t deviceIndex{0};
 
     deviceIndex = config.deviceIndex;
-    assert(deviceIndex < deviceCount);
+    assert(deviceIndex < deviceCount && "Device index is less than device count.");
 
     VkPhysicalDeviceProperties2 deviceProps{.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
     vkGetPhysicalDeviceProperties2(devices[deviceIndex], &deviceProps);
@@ -170,6 +170,7 @@ void VulkanContext::createDevice()
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
         .descriptorIndexing = true,
         .shaderSampledImageArrayNonUniformIndexing = true,
+        .descriptorBindingPartiallyBound = true,
         .descriptorBindingVariableDescriptorCount = true,
         .runtimeDescriptorArray = true,
         .bufferDeviceAddress = true};

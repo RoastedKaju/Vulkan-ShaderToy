@@ -22,6 +22,11 @@ target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 find_package(Vulkan REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::Vulkan)
 
+# Shader C
+# Adding system in the Vulkan include directory will not show us warnings originating from there
+target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE $ENV{VULKAN_SDK}/Include)
+target_link_libraries(${PROJECT_NAME} PRIVATE $ENV{VULKAN_SDK}/Lib/shaderc_combined.lib)
+
 # SDL3
 find_package(SDL3 CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3)
