@@ -35,6 +35,7 @@ public:
     inline VkQueue getGraphicsQueue() const { return queue; }
     inline const Config &getConfig() const { return config; }
     inline VkCommandPool getCommandPool() const { return commandPool; }
+    inline VmaAllocator getAllocator() const { return allocator; }
 
 private:
     void createInstance();

@@ -22,7 +22,11 @@ void Application::init(uint32_t deviceIndexArg)
     // Load fullscreen shaders
     pRenderer->createShaders();
 
-    isRunning = false;
+    // Create graphics pipeline
+    pRenderer->createPipeline();
+
+    lastTime = SDL_GetTicks();
+    isRunning = true;
 }
 
 void Application::run()
@@ -63,7 +67,7 @@ int main(int argc, char *argv)
     }
     catch (const std::exception &exception)
     {
-        std::cerr <<"[EXCEPTION] "<< exception.what() << '\n';
+        std::cerr << "[EXCEPTION] " << exception.what() << '\n';
         return EXIT_FAILURE;
     }
 

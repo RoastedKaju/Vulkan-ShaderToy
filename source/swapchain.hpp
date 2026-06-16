@@ -20,6 +20,7 @@ public:
     inline VkSwapchainKHR getSwapchain() const { return swapchain; }
     inline std::vector<VkImage> &getSwapchainImages() { return swapchainImages; }
     inline std::vector<VkImageView> &getSwapchainImageViews() { return swapchainImageViews; }
+    inline VkFormat getFormat() const { return format; };
 
 protected:
     void createSurface();
@@ -31,6 +32,7 @@ private:
     VkExtent2D swapchainExtent{};
     VkSurfaceKHR surface{VK_NULL_HANDLE};
     VkSwapchainKHR swapchain{VK_NULL_HANDLE};
+    VkFormat format;
     std::vector<VkImage> swapchainImages;
     std::vector<VkImageView> swapchainImageViews;
 

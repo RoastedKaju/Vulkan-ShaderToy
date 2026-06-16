@@ -77,5 +77,7 @@ void Swapchain::createSwapchain()
         utils::check(vkCreateImageView(device, &viewCreateInfo, nullptr, &swapchainImageViews[i]));
     }
 
+    format = imageFormat;
+
     std::cout << "Swapchain created.\n";
 }

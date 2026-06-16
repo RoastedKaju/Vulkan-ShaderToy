@@ -8,11 +8,25 @@
 #include <vulkan/vulkan.h>
 #include <shaderc/shaderc.hpp>
 
+#include "math.hpp"
 #include "vulkan_context.hpp"
 #include "swapchain.hpp"
 
 constexpr uint32_t maxFramesInFlight{2};
 constexpr uint32_t maxTextures{64};
+
+struct ShaderData
+{
+    glm::vec3 color;
+};
+
+struct ShaderDataBuffer
+{
+    VmaAllocationInfo allocationInfo{};
+    VmaAllocation allocation{VK_NULL_HANDLE};
+    VkBuffer buffer{VK_NULL_HANDLE};
+    VkDeviceAddress deviceAddress;
+};
 
 class Renderer
 {
@@ -21,8 +35,10 @@ public:
     ~Renderer();
 
     void createShaders();
+    void createPipeline();
 
 private:
+    void createShaderDataBuffers();
     void createSyncObjects();
     void createCommandBuffers();
     void setupDescriptors();
@@ -37,6 +53,9 @@ private:
     // Renderer own swapchain
     Swapchain swapchain;
 
+    // Per-Frame shader data
+    ShaderData shaderData{};
+    std::array<ShaderDataBuffer, maxFramesInFlight> shaderDataBuffers;
     // Frame data
     uint32_t imageIndex{0};
     uint32_t frameIndex{0};
@@ -58,4 +77,9 @@ private:
     VkShaderModule fragmentShaderModule{VK_NULL_HANDLE};
 
     // Pipeline
+    // For shader-toy project there is only one set with one binding
+    // Set 0
+    // └─ Binding 0 : sampler2D textures[]
+    VkPipelineLayout pipelineLayout{VK_NULL_HANDLE};
+    VkPipeline pipeline{VK_NULL_HANDLE};
 };

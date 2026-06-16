@@ -24,4 +24,6 @@ private:
 
     SDL_Window *pWindow;
     bool isRunning = false;
+
+    uint64_t lastTime{0};
 };
