@@ -41,6 +41,8 @@ void Application::run()
                 isRunning = false;
             }
         }
+
+        pRenderer->drawFrame();
     }
 }
 

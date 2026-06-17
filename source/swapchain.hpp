@@ -21,6 +21,11 @@ public:
     inline std::vector<VkImage> &getSwapchainImages() { return swapchainImages; }
     inline std::vector<VkImageView> &getSwapchainImageViews() { return swapchainImageViews; }
     inline VkFormat getFormat() const { return format; };
+    inline bool isSwapchainDirty() const { return swapchainDirty; }
+    inline const glm::ivec2 &getWindowSize() const { return windowSize; }
+
+    // Setter
+    inline void markSwapchainDirty() { swapchainDirty = true; }
 
 protected:
     void createSurface();
@@ -37,5 +42,5 @@ private:
     std::vector<VkImageView> swapchainImageViews;
 
     glm::ivec2 windowSize{};
-    bool swapchianDirty{false};
+    bool swapchainDirty{false};
 };
