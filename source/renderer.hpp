@@ -37,11 +37,20 @@ public:
     void createShaders();
     void createPipeline();
 
+    void drawFrame();
+
 private:
     void createShaderDataBuffers();
     void createSyncObjects();
     void createCommandBuffers();
     void setupDescriptors();
+
+    void waitForFrame();
+    void acquireImage();
+    void updateShaderData();
+    void recordCommandBuffer(VkCommandBuffer cmd);
+    void submitFrame(VkCommandBuffer cmd);
+    void presentFrame();
 
     std::vector<uint32_t> compileShader(const std::filesystem::path &path, shaderc_shader_kind kind);
     VkShaderModule createShaderModule(const std::vector<uint32_t> &spirv);
@@ -61,7 +70,7 @@ private:
     uint32_t frameIndex{0};
     std::array<VkFence, maxFramesInFlight> fences;
     std::array<VkSemaphore, maxFramesInFlight> imageAcquiredSemaphores;
-    std::vector<VkSemaphore> renderComponentSemaphores;
+    std::vector<VkSemaphore> renderCompleteSemaphores;
 
     // Command buffers
     std::array<VkCommandBuffer, maxFramesInFlight> commandBuffers;

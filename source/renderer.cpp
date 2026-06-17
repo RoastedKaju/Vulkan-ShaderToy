@@ -70,9 +70,9 @@ void Renderer::createSyncObjects()
         utils::check(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &imageAcquiredSemaphores[i]));
     }
 
-    renderComponentSemaphores.resize(swapchainImageCount);
+    renderCompleteSemaphores.resize(swapchainImageCount);
 
-    for (auto &semaphore : renderComponentSemaphores)
+    for (auto &semaphore : renderCompleteSemaphores)
     {
         utils::check(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &semaphore));
     }
@@ -167,6 +167,169 @@ void Renderer::setupDescriptors()
     }
 
     std::cout << "Descriptor sets setup.\n";
+}
+
+void Renderer::waitForFrame()
+{
+    utils::check(vkWaitForFences(context.getLogicalDevice(), 1, &fences[frameIndex], true, UINT64_MAX));
+    utils::check(vkResetFences(context.getLogicalDevice(), 1, &fences[frameIndex]));
+}
+
+void Renderer::acquireImage()
+{
+    VkResult result = vkAcquireNextImageKHR(context.getLogicalDevice(), swapchain.getSwapchain(), UINT64_MAX, imageAcquiredSemaphores[frameIndex], VK_NULL_HANDLE, &imageIndex);
+    if (result < VK_SUCCESS)
+    {
+        if (result == VK_ERROR_OUT_OF_DATE_KHR)
+        {
+            swapchain.markSwapchainDirty();
+            return;
+        }
+        throw std::runtime_error(std::string("Failed to acquire image: " + result));
+    }
+}
+
+void Renderer::updateShaderData()
+{
+    shaderData.color = glm::vec3(1.0f, 0.0f, 0.0f);
+    memcpy(shaderDataBuffers[frameIndex].allocationInfo.pMappedData, &shaderData, sizeof(ShaderData));
+}
+
+void Renderer::recordCommandBuffer(VkCommandBuffer cmd)
+{
+    utils::check(vkResetCommandBuffer(cmd, 0));
+    // Begin command buffer
+    VkCommandBufferBeginInfo cmdBufferbeginInfo{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT};
+    utils::check(vkBeginCommandBuffer(cmd, &cmdBufferbeginInfo));
+
+    // Barriers
+    // clang-format off
+    std::array<VkImageMemoryBarrier2, 1> outputBarriers
+    {
+        VkImageMemoryBarrier2
+        {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+            .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .srcAccessMask = 0,
+            .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .newLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+            .image = swapchain.getSwapchainImages()[imageIndex],
+            .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1}
+        }
+        // In case you have another rexture like depth attachment, make a barrier here
+    };
+    // clang-format on
+
+    // Barrier/Transition
+    VkDependencyInfo barrierDependencyInfo{
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .imageMemoryBarrierCount = (uint32_t)outputBarriers.size(),
+        .pImageMemoryBarriers = outputBarriers.data()};
+    vkCmdPipelineBarrier2(cmd, &barrierDependencyInfo);
+
+    VkRenderingAttachmentInfo colorAttachmentInfo{
+        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+        .imageView = swapchain.getSwapchainImageViews()[imageIndex],
+        .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .clearValue = {.color{0.0f, 0.0f, 0.0f, 1.0f}}};
+
+    // Ignore depth attachment
+
+    // Rendering Information
+    glm::ivec2 windowSize = swapchain.getWindowSize();
+    VkRenderingInfo renderingInfo{
+        .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+        .renderArea{.extent{.width = (uint32_t)windowSize.x, .height = (uint32_t)windowSize.y}},
+        .layerCount = 1,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &colorAttachmentInfo,
+        .pDepthAttachment = nullptr};
+
+    // Dynamic rendering
+    // Begin rendering
+    vkCmdBeginRendering(cmd, &renderingInfo);
+    // Set viewport and scissor
+    VkViewport viewport{.width = (float)windowSize.x, .height = (float)windowSize.y, .minDepth = 0.0f, .maxDepth = 1.0f};
+    vkCmdSetViewport(cmd, 0, 1, &viewport);
+    VkRect2D scissor{.extent{.width = static_cast<uint32_t>(windowSize.x), .height = static_cast<uint32_t>(windowSize.y)}};
+    // Bind pipeline
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+    vkCmdSetScissor(cmd, 0, 1, &scissor);
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
+    // Ignore binding vertex, index and push constant
+
+    // Draw
+    vkCmdDraw(cmd, 3, 1, 0, 0);
+
+    // End rendering
+    vkCmdEndRendering(cmd);
+
+    // Transition image to output format
+    VkImageMemoryBarrier2 barrierPresent{
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+        .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .dstAccessMask = 0,
+        .oldLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+        .newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+        .image = swapchain.getSwapchainImages()[imageIndex],
+        .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1}};
+    VkDependencyInfo barrierPresentDependencyInfo{
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &barrierPresent};
+    vkCmdPipelineBarrier2(cmd, &barrierPresentDependencyInfo);
+    // End command buffer
+    utils::check(vkEndCommandBuffer(cmd));
+}
+
+void Renderer::submitFrame(VkCommandBuffer cmd)
+{
+    // Submit to graphics queue
+    VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+    VkSubmitInfo submitInfo{
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &imageAcquiredSemaphores[frameIndex],
+        .pWaitDstStageMask = &waitStage,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &cmd,
+        .signalSemaphoreCount = 1,
+        .pSignalSemaphores = &renderCompleteSemaphores[imageIndex]};
+
+    utils::check(vkQueueSubmit(context.getGraphicsQueue(), 1, &submitInfo, fences[frameIndex]));
+}
+
+void Renderer::presentFrame()
+{
+    auto _swapchain = swapchain.getSwapchain();
+    frameIndex = (frameIndex + 1) % maxFramesInFlight;
+    // Present
+    VkPresentInfoKHR presentInfo{
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &renderCompleteSemaphores[imageIndex],
+        .swapchainCount = 1,
+        .pSwapchains = &_swapchain,
+        .pImageIndices = &imageIndex};
+
+    VkResult result = vkQueuePresentKHR(context.getGraphicsQueue(), &presentInfo);
+    if (result < VK_SUCCESS)
+    {
+        if (result == VK_ERROR_OUT_OF_DATE_KHR)
+        {
+            swapchain.markSwapchainDirty();
+            return;
+        }
+        throw std::runtime_error(std::string("Failed to acquire image: " + result));
+    }
 }
 
 void Renderer::createPipeline()
@@ -274,6 +437,25 @@ void Renderer::createPipeline()
     utils::check(vkCreateGraphicsPipelines(context.getLogicalDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline));
 
     std::cout << "Graphics pipeline created.\n";
+}
+
+void Renderer::drawFrame()
+{
+    waitForFrame();
+
+    acquireImage();
+
+    updateShaderData();
+
+    auto cmd = commandBuffers[frameIndex];
+
+    recordCommandBuffer(cmd);
+
+    submitFrame(cmd);
+
+    presentFrame();
+
+    frameIndex = (frameIndex + 1) % maxFramesInFlight;
 }
 
 void Renderer::createShaders()
