@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <array>
 #include <vector>
 #include <memory>
@@ -17,7 +18,14 @@ constexpr uint32_t maxTextures{64};
 
 struct ShaderData
 {
-    glm::vec3 color;
+    glm::vec2 resolution;
+    glm::vec2 mouse;
+
+    float time;
+    float deltaTime;
+
+    uint32_t frameIndex;
+    uint32_t flags;
 };
 
 struct ShaderDataBuffer

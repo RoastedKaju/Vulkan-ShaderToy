@@ -191,7 +191,7 @@ void Renderer::acquireImage()
 
 void Renderer::updateShaderData()
 {
-    shaderData.color = glm::vec3(1.0f, 0.0f, 0.0f);
+    shaderData.deltaTime = 25.0f;
     memcpy(shaderDataBuffers[frameIndex].allocationInfo.pMappedData, &shaderData, sizeof(ShaderData));
 }
 
@@ -262,7 +262,10 @@ void Renderer::recordCommandBuffer(VkCommandBuffer cmd)
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
     vkCmdSetScissor(cmd, 0, 1, &scissor);
     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
-    // Ignore binding vertex, index and push constant
+    // Ignore binding vertex and index
+    VkDeviceSize vOffset{0};
+    (void)vOffset;
+    vkCmdPushConstants(cmd, pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(VkDeviceAddress), &shaderDataBuffers[frameIndex].deviceAddress);
 
     // Draw
     vkCmdDraw(cmd, 3, 1, 0, 0);
@@ -418,10 +421,16 @@ void Renderer::recreateSwapchain()
 
 void Renderer::createPipeline()
 {
+    VkPushConstantRange pushConstantRange{
+        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .size = sizeof(VkDeviceAddress)};
+
     VkPipelineLayoutCreateInfo layoutInfo{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .setLayoutCount = 1,
-        .pSetLayouts = &descriptorSetLayout};
+        .pSetLayouts = &descriptorSetLayout,
+        .pushConstantRangeCount = 1,
+        .pPushConstantRanges = &pushConstantRange};
 
     utils::check(vkCreatePipelineLayout(context.getLogicalDevice(), &layoutInfo, nullptr, &pipelineLayout));
 
