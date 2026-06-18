@@ -22,6 +22,7 @@ Renderer::Renderer(VulkanContext &ctx) : context{ctx}
 
 Renderer::~Renderer()
 {
+    destroyRenderer();
 }
 
 void Renderer::createShaderDataBuffers()
@@ -417,6 +418,41 @@ void Renderer::recreateSwapchain()
     // Normally you would also destroy depth images here
 
     std::cout << "Swapchain recreated.\n";
+}
+
+void Renderer::destroyRenderer()
+{
+    auto device = context.getLogicalDevice();
+    auto allocator = context.getAllocator();
+
+    utils::check(vkDeviceWaitIdle(device));
+
+    for (auto i = 0; i < maxFramesInFlight; ++i)
+    {
+        vkDestroyFence(device, fences[i], nullptr);
+        vkDestroySemaphore(device, imageAcquiredSemaphores[i], nullptr);
+        vmaDestroyBuffer(allocator, shaderDataBuffers[i].buffer, shaderDataBuffers[i].allocation);
+    }
+
+    for (auto i = 0; i < renderCompleteSemaphores.size(); ++i)
+    {
+        vkDestroySemaphore(device, renderCompleteSemaphores[i], nullptr);
+    }
+
+    // Destroy depth attachment here alongside with its view
+
+    vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+    vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+    vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+    vkDestroyPipeline(device, pipeline, nullptr);
+
+    // Also destroys surface
+    swapchain.destroySwapchain();
+
+    vkDestroyShaderModule(device, vertexShaderModule, nullptr);
+    vkDestroyShaderModule(device, fragmentShaderModule, nullptr);
+
+    std::cout << "Destroyed Vulkan renderer.\n";
 }
 
 void Renderer::createPipeline()

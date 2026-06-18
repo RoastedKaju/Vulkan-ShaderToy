@@ -19,6 +19,18 @@ void Swapchain::init(VulkanContext *context)
     createSwapchain();
 }
 
+void Swapchain::destroySwapchain()
+{
+    for (auto i = 0; i < swapchainImageViews.size(); ++i)
+    {
+        vkDestroyImageView(pContext->getLogicalDevice(), swapchainImageViews[i], nullptr);
+    }
+    vkDestroySwapchainKHR(pContext->getLogicalDevice(), swapchain, nullptr);
+    vkDestroySurfaceKHR(pContext->getInstance(), surface, nullptr);
+
+    std::cout << "Destroyed vulkan swapchain.\n";
+}
+
 void Swapchain::createSurface()
 {
     auto *window = pContext->getWindow();

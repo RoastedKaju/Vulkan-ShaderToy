@@ -49,13 +49,21 @@ VulkanContext::VulkanContext(const Config &config) : config{config}
 
 VulkanContext::~VulkanContext()
 {
-    std::cout << "Tearing down Vulkan context.\n";
+    vkDestroyCommandPool(device, commandPool, nullptr);
+    vmaDestroyAllocator(allocator);
+
     if (pWindow)
     {
         SDL_DestroyWindow(pWindow);
     }
     SDL_QuitSubSystem(SDL_INIT_VIDEO);
     SDL_Quit();
+
+    vkDestroyDevice(device, nullptr);
+    vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+    vkDestroyInstance(instance, nullptr);
+
+    std::cout << "Destroyed vulkan context.\n";
 }
 
 SDL_Window *VulkanContext::createWindow(const char *title, int width, int height)

@@ -15,6 +15,9 @@ public:
 
     void init(VulkanContext *context);
 
+    // Tear down destroy method
+    void destroySwapchain();
+
     // Getters
     inline VkSurfaceKHR getSurface() const { return surface; }
     inline VkSurfaceCapabilitiesKHR &getSurfaceCaps() { return surfaceCaps; }

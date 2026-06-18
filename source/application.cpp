@@ -58,6 +58,8 @@ void Application::shutdown()
 {
     pRenderer.reset();
     pVulkanContext.reset();
+    
+    std::cout << "Application tear down complete.\n";
 }
 
 int main(int argc, char *argv)

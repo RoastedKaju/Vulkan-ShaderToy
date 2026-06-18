@@ -44,7 +44,6 @@ public:
 
     void createShaders();
     void createPipeline();
-
     void drawFrame();
 
     inline void markSwapchainDirty() { swapchain.markSwapchainDirty(); }
@@ -62,6 +61,8 @@ private:
     void submitFrame(VkCommandBuffer cmd);
     void presentFrame();
     void recreateSwapchain();
+
+    void destroyRenderer();
 
     std::vector<uint32_t> compileShader(const std::filesystem::path &path, shaderc_shader_kind kind);
     VkShaderModule createShaderModule(const std::vector<uint32_t> &spirv);
