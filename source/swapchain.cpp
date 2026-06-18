@@ -42,17 +42,24 @@ void Swapchain::createSwapchain()
     auto device = pContext->getLogicalDevice();
     const auto presentMode = pContext->getConfig().presentMode;
 
+    // clamp min image count
+    uint32_t minImageCount = surfaceCaps.minImageCount + 1;
+    if (surfaceCaps.maxImageCount > 0)
+    {
+        minImageCount = std::min(minImageCount, surfaceCaps.maxImageCount);
+    }
+
     const VkFormat imageFormat{VK_FORMAT_B8G8R8A8_SRGB};
     VkSwapchainCreateInfoKHR createInfo{
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
         .surface = surface,
-        .minImageCount = surfaceCaps.minImageCount,
+        .minImageCount = minImageCount,
         .imageFormat = imageFormat,
         .imageColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR,
         .imageExtent{.width = swapchainExtent.width, .height = swapchainExtent.height},
         .imageArrayLayers = 1,
         .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-        .preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+        .preTransform = surfaceCaps.currentTransform,
         .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
         .presentMode = presentMode};
 

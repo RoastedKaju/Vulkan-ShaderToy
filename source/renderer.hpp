@@ -39,6 +39,8 @@ public:
 
     void drawFrame();
 
+    inline void markSwapchainDirty() { swapchain.markSwapchainDirty(); }
+
 private:
     void createShaderDataBuffers();
     void createSyncObjects();
@@ -51,6 +53,7 @@ private:
     void recordCommandBuffer(VkCommandBuffer cmd);
     void submitFrame(VkCommandBuffer cmd);
     void presentFrame();
+    void recreateSwapchain();
 
     std::vector<uint32_t> compileShader(const std::filesystem::path &path, shaderc_shader_kind kind);
     VkShaderModule createShaderModule(const std::vector<uint32_t> &spirv);

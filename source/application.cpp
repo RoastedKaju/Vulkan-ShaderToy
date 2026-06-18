@@ -34,11 +34,19 @@ void Application::run()
     SDL_Event event;
     while (isRunning)
     {
+        float elapsedTime{(SDL_GetTicks() - lastTime) / 1000.0f};
+        lastTime = SDL_GetTicks();
+        (void)elapsedTime;
+
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_EVENT_QUIT)
             {
                 isRunning = false;
+            }
+            if (event.type == SDL_EVENT_WINDOW_RESIZED)
+            {
+                pRenderer->markSwapchainDirty();
             }
         }
 

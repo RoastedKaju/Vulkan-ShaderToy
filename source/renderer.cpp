@@ -310,7 +310,7 @@ void Renderer::submitFrame(VkCommandBuffer cmd)
 void Renderer::presentFrame()
 {
     auto _swapchain = swapchain.getSwapchain();
-    frameIndex = (frameIndex + 1) % maxFramesInFlight;
+
     // Present
     VkPresentInfoKHR presentInfo{
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
@@ -330,6 +330,90 @@ void Renderer::presentFrame()
         }
         throw std::runtime_error(std::string("Failed to acquire image: " + result));
     }
+}
+
+void Renderer::recreateSwapchain()
+{
+    auto windowSize = swapchain.getWindowSize();
+    auto device = context.getLogicalDevice();
+    auto physicalDevice = context.getPhysicalDevice();
+    auto oldSwapchain = swapchain.getSwapchain();
+    const auto oldImageCount = swapchain.getSwapchainImages().size();
+
+    utils::check(SDL_GetWindowSize(context.getWindow(), &windowSize.x, &windowSize.y));
+    swapchain.setWindowSize(windowSize);
+    swapchain.markSwapchainDirty(false);
+
+    utils::check(vkDeviceWaitIdle(device));
+    utils::check(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, swapchain.getSurface(), &swapchain.getSurfaceCaps()));
+    swapchain.setSwapchainExtent({(uint32_t)windowSize.x, (uint32_t)windowSize.y});
+
+    // clamp min image count
+    uint32_t minImageCount = swapchain.getSurfaceCaps().minImageCount + 1;
+    if (swapchain.getSurfaceCaps().maxImageCount > 0)
+    {
+        minImageCount = std::min(minImageCount, swapchain.getSurfaceCaps().maxImageCount);
+    }
+
+    VkSwapchainCreateInfoKHR createInfo{
+        .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+        .surface = swapchain.getSurface(),
+        .minImageCount = minImageCount,
+        .imageFormat = swapchain.getFormat(),
+        .imageColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR,
+        .imageExtent{.width = swapchain.getSwapchainExtent().width, .height = swapchain.getSwapchainExtent().height},
+        .imageArrayLayers = 1,
+        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        .preTransform = swapchain.getSurfaceCaps().currentTransform,
+        .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+        .presentMode = context.getConfig().presentMode};
+
+    createInfo.oldSwapchain = oldSwapchain;
+
+    // Create new swapchain
+    utils::check(vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapchain.getSwapchain()));
+
+    // Destroy old views
+    uint32_t imageCount{(uint32_t)oldImageCount};
+    for (auto i = 0; i < (int)imageCount; ++i)
+    {
+        vkDestroyImageView(device, swapchain.getSwapchainImageViews()[i], nullptr);
+    }
+
+    // Get new swapchain images
+    utils::check(vkGetSwapchainImagesKHR(device, swapchain.getSwapchain(), &imageCount, nullptr));
+    swapchain.getSwapchainImages().resize(imageCount);
+    utils::check(vkGetSwapchainImagesKHR(device, swapchain.getSwapchain(), &imageCount, swapchain.getSwapchainImages().data()));
+    swapchain.getSwapchainImageViews().resize(imageCount);
+    // Create new image views
+    for (auto i = 0; i < (int)imageCount; ++i)
+    {
+        VkImageViewCreateInfo viewCreateInfo{
+            .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+            .image = swapchain.getSwapchainImages()[i],
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .format = swapchain.getFormat(),
+            .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1}};
+        utils::check(vkCreateImageView(device, &viewCreateInfo, nullptr, &swapchain.getSwapchainImageViews()[i]));
+    }
+
+    // Destroy old sync objects
+    for (auto &semaphore : renderCompleteSemaphores)
+    {
+        vkDestroySemaphore(device, semaphore, nullptr);
+    }
+    renderCompleteSemaphores.resize(imageCount);
+    VkSemaphoreCreateInfo semaphoreCreateInfo{.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+    for (auto &semaphore : renderCompleteSemaphores)
+    {
+        utils::check(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &semaphore));
+    }
+
+    // Destroy old swapchain
+    vkDestroySwapchainKHR(device, createInfo.oldSwapchain, nullptr);
+    // Normally you would also destroy depth images here
+
+    std::cout << "Swapchain recreated.\n";
 }
 
 void Renderer::createPipeline()
@@ -456,6 +540,11 @@ void Renderer::drawFrame()
     presentFrame();
 
     frameIndex = (frameIndex + 1) % maxFramesInFlight;
+
+    if (swapchain.isSwapchainDirty())
+    {
+        recreateSwapchain();
+    }
 }
 
 void Renderer::createShaders()
