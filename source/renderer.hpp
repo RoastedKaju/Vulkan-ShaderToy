@@ -45,6 +45,7 @@ public:
     void createShaders();
     void createPipeline();
     void drawFrame();
+    void reloadShaders();
 
     inline void markSwapchainDirty() { swapchain.markSwapchainDirty(); }
 

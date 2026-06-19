@@ -48,6 +48,14 @@ void Application::run()
             {
                 pRenderer->markSwapchainDirty();
             }
+            if (event.type == SDL_EVENT_KEY_DOWN)
+            {
+                if (!event.key.repeat && event.key.scancode == SDL_SCANCODE_R && event.key.mod & SDL_KMOD_CTRL)
+                {
+                    std::cout << "Reloading shaders.\n";
+                    pRenderer->reloadShaders();
+                }
+            }
         }
 
         pRenderer->drawFrame();
@@ -58,7 +66,7 @@ void Application::shutdown()
 {
     pRenderer.reset();
     pVulkanContext.reset();
-    
+
     std::cout << "Application tear down complete.\n";
 }
 

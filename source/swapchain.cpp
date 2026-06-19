@@ -28,7 +28,7 @@ void Swapchain::destroySwapchain()
     vkDestroySwapchainKHR(pContext->getLogicalDevice(), swapchain, nullptr);
     vkDestroySurfaceKHR(pContext->getInstance(), surface, nullptr);
 
-    std::cout << "Destroyed vulkan swapchain.\n";
+    std::cout << "Destroyed Vulkan swapchain.\n";
 }
 
 void Swapchain::createSurface()

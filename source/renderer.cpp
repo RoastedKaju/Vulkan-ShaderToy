@@ -592,6 +592,36 @@ void Renderer::drawFrame()
     }
 }
 
+void Renderer::reloadShaders()
+{
+    vkDeviceWaitIdle(context.getLogicalDevice());
+
+    // Compile new shader (we only need fragment shader)
+    std::vector<uint32_t> fragmentSpirv;
+    try
+    {
+        fragmentSpirv = compileShader("../../assets/shaders/fullscreen.frag", shaderc_fragment_shader);
+    }
+    catch (const std::exception &exception)
+    {
+        std::cerr << "[Shader reload failed] " << exception.what() << '\n';
+        return;
+    }
+
+    // Destroy old resources
+    vkDestroyPipeline(context.getLogicalDevice(), pipeline, nullptr);
+    vkDestroyPipelineLayout(context.getLogicalDevice(), pipelineLayout, nullptr);
+    vkDestroyShaderModule(context.getLogicalDevice(), fragmentShaderModule, nullptr);
+
+    // New fragment shader module
+    fragmentShaderModule = createShaderModule(fragmentSpirv);
+
+    // New pipeline same as old one
+    createPipeline();
+
+    std::cout << "Shader reloaded and pipeline recreated successfully.\n";
+}
+
 void Renderer::createShaders()
 {
     auto vertexSpirv{compileShader("../../assets/shaders/fullscreen.vert", shaderc_vertex_shader)};
