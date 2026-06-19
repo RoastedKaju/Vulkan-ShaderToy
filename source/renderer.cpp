@@ -3,6 +3,7 @@
 #include <volk.h>
 
 #include "utils.hpp"
+#include "includer.hpp"
 
 Renderer::Renderer(VulkanContext &ctx) : context{ctx}
 {
@@ -644,6 +645,7 @@ std::vector<uint32_t> Renderer::compileShader(const std::filesystem::path &path,
     shaderc::CompileOptions options;
 
     options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
+    options.SetIncluder(std::make_unique<Includer>());
 
     auto result{compiler.CompileGlslToSpv(source, kind, path.string().c_str(), options)};
 
