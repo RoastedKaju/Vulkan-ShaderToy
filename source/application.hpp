@@ -25,5 +25,8 @@ private:
     SDL_Window *pWindow;
     bool isRunning = false;
 
-    uint64_t lastTime{0};
+    uint64_t lastCounter{0};
+    float time{0.0f};
+    float deltaTime{0.0f};
+    uint32_t frameCounter{0};
 };

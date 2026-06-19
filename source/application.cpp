@@ -25,7 +25,7 @@ void Application::init(uint32_t deviceIndexArg)
     // Create graphics pipeline
     pRenderer->createPipeline();
 
-    lastTime = SDL_GetTicks();
+    lastCounter = SDL_GetPerformanceCounter();
     isRunning = true;
 }
 
@@ -34,9 +34,11 @@ void Application::run()
     SDL_Event event;
     while (isRunning)
     {
-        float elapsedTime{(SDL_GetTicks() - lastTime) / 1000.0f};
-        lastTime = SDL_GetTicks();
-        (void)elapsedTime;
+        const Uint64 currentCounter = SDL_GetPerformanceCounter();
+        deltaTime = static_cast<float>((currentCounter - lastCounter) / static_cast<double>(SDL_GetPerformanceFrequency()));
+
+        lastCounter = currentCounter;
+        time += deltaTime;
 
         while (SDL_PollEvent(&event))
         {
@@ -58,7 +60,9 @@ void Application::run()
             }
         }
 
-        pRenderer->drawFrame();
+        pRenderer->drawFrame(time, deltaTime, frameCounter);
+
+        ++frameCounter;
     }
 }
 

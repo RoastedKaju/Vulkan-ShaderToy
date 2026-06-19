@@ -190,9 +190,12 @@ void Renderer::acquireImage()
     }
 }
 
-void Renderer::updateShaderData()
+void Renderer::updateShaderData(float time, float deltaTime, uint32_t frameCounter)
 {
-    shaderData.deltaTime = 25.0f;
+    shaderData.time = time;
+    shaderData.deltaTime = deltaTime;
+    shaderData.frameCounter = frameCounter;
+
     memcpy(shaderDataBuffers[frameIndex].allocationInfo.pMappedData, &shaderData, sizeof(ShaderData));
 }
 
@@ -221,7 +224,7 @@ void Renderer::recordCommandBuffer(VkCommandBuffer cmd)
             .image = swapchain.getSwapchainImages()[imageIndex],
             .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1}
         }
-        // In case you have another rexture like depth attachment, make a barrier here
+        // In case you have another texture like depth attachment, make a barrier here
     };
     // clang-format on
 
@@ -568,13 +571,13 @@ void Renderer::createPipeline()
     std::cout << "Graphics pipeline created.\n";
 }
 
-void Renderer::drawFrame()
+void Renderer::drawFrame(float time, float deltaTime, uint32_t frameCounter)
 {
     waitForFrame();
 
     acquireImage();
 
-    updateShaderData();
+    updateShaderData(time, deltaTime, frameCounter);
 
     auto cmd = commandBuffers[frameIndex];
 

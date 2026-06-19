@@ -18,14 +18,9 @@ constexpr uint32_t maxTextures{64};
 
 struct ShaderData
 {
-    glm::vec2 resolution;
-    glm::vec2 mouse;
-
     float time;
     float deltaTime;
-
-    uint32_t frameIndex;
-    uint32_t flags;
+    uint32_t frameCounter;
 };
 
 struct ShaderDataBuffer
@@ -44,7 +39,7 @@ public:
 
     void createShaders();
     void createPipeline();
-    void drawFrame();
+    void drawFrame(float time, float deltaTime, uint32_t frameCounter);
     void reloadShaders();
 
     inline void markSwapchainDirty() { swapchain.markSwapchainDirty(); }
@@ -57,7 +52,7 @@ private:
 
     void waitForFrame();
     void acquireImage();
-    void updateShaderData();
+    void updateShaderData(float time, float deltaTime, uint32_t frameCounter);
     void recordCommandBuffer(VkCommandBuffer cmd);
     void submitFrame(VkCommandBuffer cmd);
     void presentFrame();
