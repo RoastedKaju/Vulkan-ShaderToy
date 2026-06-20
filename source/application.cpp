@@ -28,6 +28,19 @@ void Application::init(uint32_t deviceIndexArg)
     // Create graphics pipeline
     pRenderer->createPipeline();
 
+    pGUI->init(*pVulkanContext, pRenderer->getSwapchain());
+
+    // Hook up callbacks
+    pRenderer->onRecordCommands = [this](VkCommandBuffer cmd, Swapchain &swapchain, uint32_t imageIndex)
+    {
+        pGUI->recordCommands(cmd, swapchain, imageIndex);
+    };
+
+    pRenderer->onDestroyRenderer = [this](VulkanContext &ctx)
+    {
+        pGUI->shutdown(ctx);
+    };
+
     lastCounter = SDL_GetPerformanceCounter();
     isRunning = true;
 }
@@ -45,7 +58,10 @@ void Application::run()
 
         while (SDL_PollEvent(&event))
         {
-            ImGui_ImplSDL3_ProcessEvent(&event);
+            if (pGUI->IsInitialized())
+            {
+                ImGui_ImplSDL3_ProcessEvent(&event);
+            }
 
             if (event.type == SDL_EVENT_QUIT)
             {
@@ -73,7 +89,6 @@ void Application::run()
 
 void Application::shutdown()
 {
-    pGUI.reset();
     pRenderer.reset();
     pVulkanContext.reset();
 

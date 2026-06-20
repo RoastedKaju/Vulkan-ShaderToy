@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include <filesystem>
+#include <functional>
 
 #include <vulkan/vulkan.h>
 #include <shaderc/shaderc.hpp>
@@ -43,6 +44,11 @@ public:
     void reloadShaders();
 
     inline void markSwapchainDirty() { swapchain.markSwapchainDirty(); }
+    inline Swapchain &getSwapchain() { return swapchain; }
+
+    // Callbacks
+    std::function<void(VulkanContext &)> onDestroyRenderer;
+    std::function<void(VkCommandBuffer, Swapchain &, uint32_t)> onRecordCommands;
 
 private:
     void createShaderDataBuffers();
@@ -63,9 +69,6 @@ private:
     std::vector<uint32_t> compileShader(const std::filesystem::path &path, shaderc_shader_kind kind);
     VkShaderModule createShaderModule(const std::vector<uint32_t> &spirv);
 
-    void initImGUI();
-    void recordImGUICommands(VkCommandBuffer cmd);
-    void shutdownImGUI();
 private:
     // Renderer uses context
     VulkanContext &context;
@@ -102,8 +105,4 @@ private:
     // └─ Binding 0 : sampler2D textures[]
     VkPipelineLayout pipelineLayout{VK_NULL_HANDLE};
     VkPipeline pipeline{VK_NULL_HANDLE};
-
-    // GUI descriptor pool
-    VkDescriptorPool imguiDescriptorPool{VK_NULL_HANDLE};
-    bool imguiInitialized{false};
 };
