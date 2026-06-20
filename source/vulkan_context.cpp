@@ -45,6 +45,9 @@ VulkanContext::VulkanContext(const Config &config) : config{config}
     createInstance();
     createDevice();
     initializeAllocator();
+
+    volkLoadInstance(instance);
+    volkLoadDevice(device);
 }
 
 VulkanContext::~VulkanContext()

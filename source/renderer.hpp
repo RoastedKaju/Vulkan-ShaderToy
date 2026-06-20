@@ -63,6 +63,9 @@ private:
     std::vector<uint32_t> compileShader(const std::filesystem::path &path, shaderc_shader_kind kind);
     VkShaderModule createShaderModule(const std::vector<uint32_t> &spirv);
 
+    void initImGUI();
+    void recordImGUICommands(VkCommandBuffer cmd);
+    void shutdownImGUI();
 private:
     // Renderer uses context
     VulkanContext &context;
@@ -99,4 +102,8 @@ private:
     // └─ Binding 0 : sampler2D textures[]
     VkPipelineLayout pipelineLayout{VK_NULL_HANDLE};
     VkPipeline pipeline{VK_NULL_HANDLE};
+
+    // GUI descriptor pool
+    VkDescriptorPool imguiDescriptorPool{VK_NULL_HANDLE};
+    bool imguiInitialized{false};
 };

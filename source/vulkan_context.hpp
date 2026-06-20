@@ -33,6 +33,7 @@ public:
     inline VkPhysicalDevice getPhysicalDevice() const { return physicalDevice; }
     inline VkDevice getLogicalDevice() const { return device; }
     inline VkQueue getGraphicsQueue() const { return queue; }
+    inline uint32_t getGraphicsFamily() const { return queueFamily; }
     inline const Config &getConfig() const { return config; }
     inline VkCommandPool getCommandPool() const { return commandPool; }
     inline VmaAllocator getAllocator() const { return allocator; }
