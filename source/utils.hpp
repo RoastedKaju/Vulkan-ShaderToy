@@ -48,4 +48,16 @@ namespace utils
 
     // Binary file read utility
     // std::vector<std::byte> readBinaryFile(...);
+
+    inline void writeTextFile(const std::filesystem::path &path, const std::string &text)
+    {
+        std::ofstream stream(path, std::ios::binary);
+
+        if (!stream.is_open())
+        {
+            throw std::runtime_error("Failed to open file for writing: " + path.string());
+        }
+
+        stream << text;
+    }
 }

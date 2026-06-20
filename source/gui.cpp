@@ -6,6 +6,7 @@
 #include <volk.h>
 
 #include "utils.hpp"
+#include "swapchain.hpp"
 
 void GUI::init(VulkanContext &context, Swapchain &swapchain)
 {
@@ -77,11 +78,11 @@ void GUI::init(VulkanContext &context, Swapchain &swapchain)
     std::cout << "ImGUI context created.\n";
 }
 
-void GUI::recordCommands(VkCommandBuffer cmd, Swapchain &swapchain, uint32_t imageIndex)
+void GUI::recordCommands(VkCommandBuffer cmd, Renderer &renderer)
 {
     beginFrame();
-    drawUI();
-    endFrame(cmd, swapchain, imageIndex);
+    drawUI(renderer);
+    endFrame(cmd, renderer.getSwapchain(), renderer.getImageIndex());
 }
 
 void GUI::beginFrame()
@@ -91,10 +92,41 @@ void GUI::beginFrame()
     ImGui::NewFrame();
 }
 
-void GUI::drawUI()
+void GUI::drawUI(Renderer &renderer)
 {
-    ImGui::Begin("Window");
-    ImGui::Text("Hello, world!");
+    (void)renderer;
+
+    static std::string shaderText = utils::readTextFile("../../assets/shaders/grid.frag");
+
+    ImGui::Begin("Shader Toy");
+
+    if (ImGui::Button("Reload (Ctrl+R)"))
+    {
+        utils::writeTextFile("../../assets/shaders/fullscreen.frag", shaderText);
+        reloadRequested = true;
+    }
+
+    ImGui::Separator();
+
+    ImVec2 avail = ImGui::GetContentRegionAvail();
+    float logHeight = 150.0f;
+    ImVec2 editorSize = ImVec2(avail.x, avail.y - logHeight - ImGui::GetStyle().ItemSpacing.y * 2);
+
+    ImGui::InputTextMultiline("##Editor", &shaderText, editorSize);
+
+    ImGui::Separator();
+    ImGui::Text("Output Log:");
+
+    ImGui::BeginChild("LogRegion", ImGui::GetContentRegionAvail(), true);
+    ImGui::TextWrapped("%s", outputLog.c_str());
+    if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
+    {
+        ImGui::SetScrollHereY(1.0f);
+    }
+    ImGui::EndChild();
+
+    // ImGui::InputTextMultiline("##Log", &outputLog, ImGui::GetContentRegionAvail(), ImGuiInputTextFlags_ReadOnly);
+
     ImGui::End();
 }
 

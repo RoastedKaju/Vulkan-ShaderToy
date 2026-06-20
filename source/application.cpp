@@ -31,14 +31,19 @@ void Application::init(uint32_t deviceIndexArg)
     pGUI->init(*pVulkanContext, pRenderer->getSwapchain());
 
     // Hook up callbacks
-    pRenderer->onRecordCommands = [this](VkCommandBuffer cmd, Swapchain &swapchain, uint32_t imageIndex)
+    pRenderer->onRecordCommands = [this](VkCommandBuffer cmd, Renderer &renderer)
     {
-        pGUI->recordCommands(cmd, swapchain, imageIndex);
+        pGUI->recordCommands(cmd, renderer);
     };
 
     pRenderer->onDestroyRenderer = [this](VulkanContext &ctx)
     {
         pGUI->shutdown(ctx);
+    };
+
+    pRenderer->onShaderReload = [this](const std::string &message)
+    {
+        GUI::outputLog = message;
     };
 
     lastCounter = SDL_GetPerformanceCounter();
@@ -82,6 +87,13 @@ void Application::run()
         }
 
         pRenderer->drawFrame(time, deltaTime, frameCounter);
+
+        // Reload shaders if requested by UI
+        if (pGUI->getReloadRequestStatus() == true)
+        {
+            pRenderer->reloadShaders();
+            pGUI->getReloadRequestStatus() = false;
+        }
 
         ++frameCounter;
     }

@@ -45,10 +45,12 @@ public:
 
     inline void markSwapchainDirty() { swapchain.markSwapchainDirty(); }
     inline Swapchain &getSwapchain() { return swapchain; }
+    inline uint32_t getImageIndex() const { return imageIndex; }
 
     // Callbacks
     std::function<void(VulkanContext &)> onDestroyRenderer;
-    std::function<void(VkCommandBuffer, Swapchain &, uint32_t)> onRecordCommands;
+    std::function<void(VkCommandBuffer, Renderer &)> onRecordCommands;
+    std::function<void(const std::string &message)> onShaderReload;
 
 private:
     void createShaderDataBuffers();
@@ -105,4 +107,7 @@ private:
     // └─ Binding 0 : sampler2D textures[]
     VkPipelineLayout pipelineLayout{VK_NULL_HANDLE};
     VkPipeline pipeline{VK_NULL_HANDLE};
+
+    // For first shader compilation
+    bool isFirstRun{true};
 };

@@ -280,7 +280,7 @@ void Renderer::recordCommandBuffer(VkCommandBuffer cmd)
 
     if (onRecordCommands)
     {
-        onRecordCommands(cmd, swapchain, imageIndex);
+        onRecordCommands(cmd, *this);
     }
 
     // Transition image to output format
@@ -618,7 +618,11 @@ void Renderer::reloadShaders()
     }
     catch (const std::exception &exception)
     {
-        std::cerr << "[Shader reload failed] " << exception.what() << '\n';
+        std::cerr << "[Shader reload failed] " << exception.what();
+        if (onShaderReload)
+        {
+            onShaderReload(std::format("[Shader reload failed]  {}", exception.what()));
+        }
         return;
     }
 
@@ -633,13 +637,28 @@ void Renderer::reloadShaders()
     // New pipeline same as old one
     createPipeline();
 
+    if (onShaderReload)
+    {
+        onShaderReload("Successfully compiled!");
+    }
+
     std::cout << "Shader reloaded and pipeline recreated successfully.\n";
 }
 
 void Renderer::createShaders()
 {
     auto vertexSpirv{compileShader("../../assets/shaders/fullscreen.vert", shaderc_vertex_shader)};
-    auto fragmentSpirv{compileShader("../../assets/shaders/fullscreen.frag", shaderc_fragment_shader)};
+    std::vector<uint32_t> fragmentSpirv{};
+
+    if (isFirstRun)
+    {
+        fragmentSpirv = compileShader("../../assets/shaders/grid.frag", shaderc_fragment_shader);
+        isFirstRun = false;
+    }
+    else
+    {
+        fragmentSpirv = compileShader("../../assets/shaders/fullscreen.frag", shaderc_fragment_shader);
+    }
 
     vertexShaderModule = createShaderModule(vertexSpirv);
     fragmentShaderModule = createShaderModule(fragmentSpirv);
