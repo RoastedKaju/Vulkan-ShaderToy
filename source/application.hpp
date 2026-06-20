@@ -7,6 +7,7 @@
 
 #include "vulkan_context.hpp"
 #include "renderer.hpp"
+#include "gui.hpp"
 
 class Application
 {
@@ -21,6 +22,7 @@ public:
 private:
     std::unique_ptr<VulkanContext> pVulkanContext;
     std::unique_ptr<Renderer> pRenderer;
+    std::unique_ptr<GUI> pGUI;
 
     SDL_Window *pWindow;
     bool isRunning = false;

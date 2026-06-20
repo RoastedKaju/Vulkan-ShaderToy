@@ -43,6 +43,10 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE GPUOpen::VulkanMemoryAllocator)
 
+# ImGUI
+add_subdirectory(external/imgui)
+target_link_libraries(${PROJECT_NAME} PRIVATE ImGUI)
+
 # Precompile definitions
 target_compile_definitions(${PROJECT_NAME} PRIVATE VK_NO_PROTOTYPES)
 

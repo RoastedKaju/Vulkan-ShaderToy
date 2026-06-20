@@ -19,6 +19,9 @@ void Application::init(uint32_t deviceIndexArg)
     // Create renderer
     pRenderer = std::make_unique<Renderer>(*pVulkanContext);
 
+    // Create GUI
+    pGUI = std::make_unique<GUI>();
+
     // Load fullscreen shaders
     pRenderer->createShaders();
 
@@ -42,6 +45,8 @@ void Application::run()
 
         while (SDL_PollEvent(&event))
         {
+            ImGui_ImplSDL3_ProcessEvent(&event);
+
             if (event.type == SDL_EVENT_QUIT)
             {
                 isRunning = false;
@@ -68,6 +73,7 @@ void Application::run()
 
 void Application::shutdown()
 {
+    pGUI.reset();
     pRenderer.reset();
     pVulkanContext.reset();
 
