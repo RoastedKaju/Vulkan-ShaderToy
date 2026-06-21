@@ -24,8 +24,11 @@ target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::Vulkan)
 
 # Shader C
 # Adding system in the Vulkan include directory will not show us warnings originating from there
-target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE $ENV{VULKAN_SDK}/Include)
-target_link_libraries(${PROJECT_NAME} PRIVATE $ENV{VULKAN_SDK}/Lib/shaderc_combined.lib)
+# target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE $ENV{VULKAN_SDK}/Include)
+# target_link_libraries(${PROJECT_NAME} PRIVATE $ENV{VULKAN_SDK}/Lib/shaderc_combined.lib)
+target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE "external/shaderc/include")
+target_link_directories(${PROJECT_NAME} PRIVATE "external/shaderc/lib")
+target_link_libraries(${PROJECT_NAME} PRIVATE shaderc_shared)
 
 # SDL3
 find_package(SDL3 CONFIG REQUIRED)
