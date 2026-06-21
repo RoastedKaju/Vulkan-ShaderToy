@@ -4,6 +4,7 @@
 
 #include "utils.hpp"
 #include "includer.hpp"
+#include "config.hpp"
 
 Renderer::Renderer(VulkanContext &ctx) : context{ctx}
 {
@@ -614,7 +615,7 @@ void Renderer::reloadShaders()
     std::vector<uint32_t> fragmentSpirv;
     try
     {
-        fragmentSpirv = compileShader("../../assets/shaders/fullscreen.frag", shaderc_fragment_shader);
+        fragmentSpirv = compileShader(std::string(ASSETS_DIR) + "/shaders/fullscreen.frag", shaderc_fragment_shader);
     }
     catch (const std::exception &exception)
     {
@@ -647,17 +648,17 @@ void Renderer::reloadShaders()
 
 void Renderer::createShaders()
 {
-    auto vertexSpirv{compileShader("../../assets/shaders/fullscreen.vert", shaderc_vertex_shader)};
+    auto vertexSpirv{compileShader(std::string(ASSETS_DIR) + "/shaders/fullscreen.vert", shaderc_vertex_shader)};
     std::vector<uint32_t> fragmentSpirv{};
 
     if (isFirstRun)
     {
-        fragmentSpirv = compileShader("../../assets/shaders/grid.frag", shaderc_fragment_shader);
+        fragmentSpirv = compileShader(std::string(ASSETS_DIR) + "/shaders/grid.frag", shaderc_fragment_shader);
         isFirstRun = false;
     }
     else
     {
-        fragmentSpirv = compileShader("../../assets/shaders/fullscreen.frag", shaderc_fragment_shader);
+        fragmentSpirv = compileShader(std::string(ASSETS_DIR) + "/shaders/fullscreen.frag", shaderc_fragment_shader);
     }
 
     vertexShaderModule = createShaderModule(vertexSpirv);

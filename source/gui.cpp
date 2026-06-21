@@ -7,6 +7,7 @@
 
 #include "utils.hpp"
 #include "swapchain.hpp"
+#include "config.hpp"
 
 void GUI::init(VulkanContext &context, Swapchain &swapchain)
 {
@@ -96,13 +97,14 @@ void GUI::drawUI(Renderer &renderer)
 {
     (void)renderer;
 
-    static std::string shaderText = utils::readTextFile("../../assets/shaders/grid.frag");
+    static std::string shaderText = utils::readTextFile(std::string(ASSETS_DIR) + "/shaders/grid.frag");
+    // static std::string shaderText = utils::readTextFile("../../assets/shaders/grid.frag");
 
     ImGui::Begin("Shader Toy");
 
     if (ImGui::Button("Reload (Ctrl+R)"))
     {
-        utils::writeTextFile("../../assets/shaders/fullscreen.frag", shaderText);
+        utils::writeTextFile(std::string(ASSETS_DIR) + "/shaders/fullscreen.frag", shaderText);
         reloadRequested = true;
     }
 
