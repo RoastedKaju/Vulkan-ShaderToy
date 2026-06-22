@@ -1,11 +1,14 @@
 {
   "dependencies": [
+    "glm",
     {
       "name": "sdl3",
-      "features": [ "vulkan" ]
+      "features": [
+        "vulkan"
+      ]
     },
-    "vulkan-memory-allocator",
     "volk",
-    "glm"
+    "vulkan-memory-allocator",
+    "gtest"
   ]
 }

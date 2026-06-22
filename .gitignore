@@ -48,3 +48,6 @@ build
 !vendor/slang/bin/*
 # Exclude slang-llvm.dll
 vendor/slang/bin/slang-llvm.dll
+
+# Excluded folder
+vcpkg_installed
