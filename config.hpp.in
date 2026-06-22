@@ -1,4 +1,0 @@
-#pragma once
-
-// This will be replaced by CMake at configure time
-#define ASSETS_DIR "@ASSETS_DIR@"

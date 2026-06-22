@@ -59,33 +59,3 @@ if(MSVC)
 else()
     target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
 endif()
-
-# Install
-# cmake --install build --prefix ./dist
-install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
-install(FILES $<TARGET_FILE:SDL3::SDL3> DESTINATION bin)
-install(FILES ${CMAKE_SOURCE_DIR}/external/shaderc/bin/shaderc_shared.dll DESTINATION bin)
-install(DIRECTORY assets/ DESTINATION assets)
-
-# Asset Pathing
-option(USE_INSTALL_PATH "Use install prefix for assets" OFF)
-
-if(USE_INSTALL_PATH)
-    set(ASSETS_DIR "${CMAKE_INSTALL_PREFIX}/assets")
-else()
-    set(ASSETS_DIR "${CMAKE_SOURCE_DIR}/assets")
-endif()
-
-configure_file(
-    ${CMAKE_SOURCE_DIR}/config.hpp.in
-    ${CMAKE_BINARY_DIR}/config.hpp
-    @ONLY
-)
-
-configure_file(
-    ${CMAKE_SOURCE_DIR}/config.hpp.in
-    ${CMAKE_BINARY_DIR}/config.hpp
-    @ONLY
-)
-
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_BINARY_DIR})
