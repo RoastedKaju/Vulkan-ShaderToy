@@ -14,12 +14,11 @@ Shader Toy application built with Vulkan 1.3 dynamic rendering, this project pro
 </p>
 
 ## Features
-- Vulkan 1.3 backend
-- Runtime GLSL to SPIR-V compilation
-- UI text editor and reloading button
+- **Vulkan 1.3** Backend.
+- Runtime GLSL to SPIR-V compilation.
+- UI text editor and reloading button.
 
-## Dependencies
-- Vulkan 1.3
+## Built With
 - SDL3
 - ShaderC
 - ImGui
@@ -27,8 +26,8 @@ Shader Toy application built with Vulkan 1.3 dynamic rendering, this project pro
 - C++ 20
 
 ## Build Instructions
-- Clone the repository using recursive pull
-- Run VCPKG bootstrap
+- Clone the repository using recursive pull.
+- Run VCPKG bootstrap.
 - Run `vcpkg install` command to pull the dependencies mentioned in manifest file.
-- Configure CMake
-- Build
+- Configure CMake.
+- Build.
